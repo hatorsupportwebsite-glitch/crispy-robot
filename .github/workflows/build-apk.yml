@@ -1,0 +1,75 @@
+name: Build APK
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main, master]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Show what was checked out
+        run: find . -maxdepth 2 -not -path './.git*' | sort
+
+      - name: Unpack the project archive
+        id: unpack
+        run: |
+          zip=$(find . -maxdepth 2 -name '*.zip' -not -path './.git/*' -print -quit)
+          if [ -n "$zip" ]; then
+            echo "Archive: $zip"
+            rm -rf _src && mkdir -p _src
+            unzip -q -o "$zip" -d _src
+            echo "root=_src" >> "$GITHUB_OUTPUT"
+          else
+            echo "No archive in the repository, using the files as they are"
+            echo "root=." >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Locate the Gradle project
+        id: find
+        run: |
+          root='${{ steps.unpack.outputs.root }}'
+          hit=$(find "$root" -name settings.gradle.kts -not -path '*/.git/*' -not -path '*/build/*' -print -quit)
+          if [ -z "$hit" ]; then
+            echo "::error::settings.gradle.kts not found. Upload Keffaine_Showcase.zip to the repository."
+            find . -maxdepth 3 -not -path './.git*' | sort
+            exit 1
+          fi
+          dir=$(dirname "$hit")
+          if [ ! -f "$dir/app/build.gradle.kts" ]; then
+            echo "::error::app/build.gradle.kts is missing next to settings.gradle.kts - the folder structure was lost during upload. Upload the ZIP archive as a single file instead of loose files."
+            find "$dir" -maxdepth 2 | sort
+            exit 1
+          fi
+          echo "dir=$dir" >> "$GITHUB_OUTPUT"
+          echo "Gradle project: $dir"
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.7'
+
+      - name: Generate the Gradle wrapper
+        working-directory: ${{ steps.find.outputs.dir }}
+        run: gradle wrapper --gradle-version 8.7
+
+      - name: Build the debug APK
+        working-directory: ${{ steps.find.outputs.dir }}
+        run: ./gradlew assembleDebug --no-daemon --stacktrace
+
+      - name: Upload the APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: Keffaine-debug-apk
+          path: ${{ steps.find.outputs.dir }}/app/build/outputs/apk/debug/app-debug.apk
+          if-no-files-found: error
