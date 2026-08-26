@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<!-- fixed layout width: the native window is sized to 780dp x 510dp * scale,
+     so the WebView scales this document to fit exactly. -->
+<meta name="viewport" content="width=780">
+<title>Keffaine menu</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<script>
+	window.KF_LAYER = "menu";
+	window.KF_OPTS = {};
+	(function () {
+		/* native passes the whole app config as ?cfg=<json> */
+		var q = new URLSearchParams(location.search);
+		if (!q.has("cfg")) return;
+		try {
+			var c = JSON.parse(q.get("cfg"));
+			for (var k in c) window.KF_OPTS[k] = c[k];
+		} catch (e) {}
+	})();
+</script>
+<script src="spec.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

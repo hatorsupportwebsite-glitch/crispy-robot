@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<!-- fixed layout width: the native window is sized to 400dp x 30dp * scale,
+     so the WebView scales this document to fit exactly. -->
+<meta name="viewport" content="width=400">
+<title>Keffaine watermark</title>
+<link rel="stylesheet" href="style.css">
+<style>
+	.wm {
+		width: 400px;
+		position: absolute;
+		left: 0;
+		top: 0;
+	}
+	.wm__user {
+		flex: 1 1 auto;
+		text-align: right;
+		overflow: hidden;
+		text-overflow: ellipsis;
+	}
+</style>
+</head>
+<body>
+<script>
+	window.KF_LAYER = "watermark";
+	window.KF_OPTS = {};
+	(function () {
+		/* native passes the whole app config as ?cfg=<json> */
+		var q = new URLSearchParams(location.search);
+		if (!q.has("cfg")) return;
+		try {
+			var c = JSON.parse(q.get("cfg"));
+			for (var k in c) window.KF_OPTS[k] = c[k];
+		} catch (e) {}
+	})();
+</script>
+<script src="spec.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+	<string name="app_name">Keffaine</string>
+	<string name="note_title">Keffaine</string>
+	<string name="note_text">Overlay is running</string>
+	<string name="note_stop">Stop</string>
+	<string name="channel_name">Overlay</string>
+</resources>

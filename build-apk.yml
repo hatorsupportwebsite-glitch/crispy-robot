@@ -1,0 +1,56 @@
+name: Build APK
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main, master]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Show what was checked out
+        run: find . -maxdepth 2 -not -path './.git*' | sort
+
+      # the project may sit at the repo root or one folder deeper,
+      # depending on how the files were uploaded
+      - name: Locate the Gradle project
+        id: find
+        run: |
+          hit=$(find . -name settings.gradle.kts -not -path './.git/*' -not -path '*/build/*' -print -quit)
+          if [ -z "$hit" ]; then
+            echo "::error::settings.gradle.kts NOT FOUND - the project files were never uploaded to this repository."
+            exit 1
+          fi
+          dir=$(dirname "$hit")
+          echo "dir=$dir" >> "$GITHUB_OUTPUT"
+          echo "Gradle project found in: $dir"
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.7'
+
+      - name: Generate the Gradle wrapper
+        working-directory: ${{ steps.find.outputs.dir }}
+        run: gradle wrapper --gradle-version 8.7
+
+      - name: Build the debug APK
+        working-directory: ${{ steps.find.outputs.dir }}
+        run: ./gradlew assembleDebug --no-daemon --stacktrace
+
+      - name: Upload the APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: Keffaine-debug-apk
+          path: ${{ steps.find.outputs.dir }}/app/build/outputs/apk/debug/app-debug.apk
+          if-no-files-found: error

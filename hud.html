@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Keffaine HUD</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<script>
+	/* full-screen, touch-transparent layer: intro + crosshair + gradient text + fake fov */
+	window.KF_LAYER = "hud";
+	window.KF_OPTS = { introDelay: 500 };
+	(function () {
+		var q = new URLSearchParams(location.search);
+		if (q.has("introDelay")) window.KF_OPTS.introDelay = parseInt(q.get("introDelay"), 10) || 0;
+		if (q.get("intro") === "0") window.KF_OPTS.intro = false;
+		if (q.get("introHold") === "1") window.KF_OPTS.introHold = true;
+	})();
+	(function () {
+		/* native passes the whole app config as ?cfg=<json> */
+		var q = new URLSearchParams(location.search);
+		if (!q.has("cfg")) return;
+		try {
+			var c = JSON.parse(q.get("cfg"));
+			for (var k in c) window.KF_OPTS[k] = c[k];
+		} catch (e) {}
+	})();
+</script>
+<script src="spec.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
